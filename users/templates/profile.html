@@ -1,0 +1,23 @@
+{% extends 'base_generic.html' %}
+
+{% load static %}
+
+{% block content %}
+  <h1>User Profile</h1>
+
+  <!-- Display the profile picture -->
+  {% if user_profile.profile_picture %}
+    <img src="{{ user_profile.profile_picture.url }}" alt="{{ user_profile.username }}'s profile picture" width="100" height="auto">
+  {% else %}
+    <p>No profile picture uploaded.</p>
+  {% endif %}
+
+  <p>Username: {{ user_profile.username }}</p>
+  <p>Bio: {{ user_profile.bio }}</p>
+  <p>Is Coach: {{ user_profile.is_coach }}</p>
+  <!-- Add more fields as needed -->
+
+  {% if user.is_authenticated and user == user_profile %}
+    <a href="{% url 'profile_edit' user.username %}">Edit Profile</a>
+  {% endif %}
+{% endblock %}
