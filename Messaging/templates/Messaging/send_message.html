@@ -1,0 +1,83 @@
+{% extends 'Users/base_generic.html' %} 
+
+{% block content %}
+    <h2>Conversation</h2>
+    
+    <div id="conversation">
+        {% for message in conversation.messages.all %}
+            <div class="message">
+                <p><strong>From:</strong> {{ message.sender }}</p>
+                <p><strong>Content:</strong> {{ message.content }}</p>
+                <p><strong>Timestamp:</strong> {{ message.timestamp }}</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <form id="messageForm" method="post" action="{% url 'send_message' conversation.id %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Send Message</button>
+    </form>
+	
+	<form method="post" action="{% url 'delete_conversation' conversation.id %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Delete Conversation</button>
+    </form>
+
+    <!-- Include Pusher JavaScript Library -->
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script>
+        // Configure Pusher instance
+        var pusher = new Pusher('d0a6be131b51d49dab8c', {
+            cluster: 'eu'
+        });
+
+        // Subscribe to the Pusher channel for the current conversation
+        var channel = pusher.subscribe('conversation_{{ conversation.id }}');
+
+        channel.bind('new_message', function(data) {
+            // Function to handle new message
+            addMessage(data);
+        });
+
+        function addMessage(data) {
+            var conversationDiv = document.getElementById('conversation');
+            var newMessageDiv = document.createElement('div');
+            newMessageDiv.className = 'message';
+
+            newMessageDiv.innerHTML = 
+                '<p><strong>From:</strong> ' + data.sender + '</p>' +
+                '<p><strong>Content:</strong> ' + data.message + '</p>' +
+                '<p><strong>Timestamp:</strong> Just now</p>';
+            
+            conversationDiv.appendChild(newMessageDiv);
+            conversationDiv.scrollTop = conversationDiv.scrollHeight; // Scroll to the new message
+        }
+
+        // AJAX request to send message without reloading the page
+        document.getElementById('messageForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            var formData = new FormData(this);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}'); // Add CSRF token
+
+            fetch("{% url 'send_message' conversation.id %}", {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Success:', data);
+                // Optionally clear the message input field here
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+{% endblock %}

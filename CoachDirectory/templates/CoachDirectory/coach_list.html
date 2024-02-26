@@ -1,0 +1,56 @@
+{% extends 'Users/base_generic.html' %}
+
+{% block content %}
+    <h2>List of Coaches</h2>
+    
+	<!-- Search and Filter Form -->
+    <form method="get">
+        <!-- Retain the text in the general search box -->
+        <input type="text" name="q" placeholder="Search coaches..." value="{{ request.GET.q }}">
+
+        <!-- Retain the text in the specialization filter box -->
+        <input type="text" name="specializations" placeholder="Specialization" value="{{ request.GET.specializations }}">
+
+        <!-- Retain the text in the location filter box -->
+        <input type="text" name="location" placeholder="Location" value="{{ request.GET.location }}">
+
+        <button type="submit">Search</button>
+    </form>
+
+
+    <ul>
+    {% for coach in coaches %}
+        {% if coach.user != user %}
+            <li>
+                <strong>{{ coach.full_name }}</strong>
+
+                <!-- Display the coach profile picture if it exists -->
+                {% if coach.profile_picture %}
+                    <img src="{{ coach.profile_picture.url }}" alt="{{ coach.full_name }}" width="100" height="auto"/>
+                {% else %}
+                    <p>No profile picture uploaded.</p>
+                {% endif %}
+
+                <!-- Existing summary details -->
+                <p>Specializations: {{ coach.specializations }}</p>
+                <p>Location: {{ coach.location }}</p>
+
+                <!-- Display average rating -->
+                <p>Average Rating: {{ coach.average_rating|floatformat:2|default:"No reviews" }}</p>
+
+                <!-- Add a button to start a conversation -->
+                <form method="post" action="{% url 'start_conversation' coach.user.username %}">
+                    {% csrf_token %}
+                    <button type="submit">Start Conversation</button>
+                </form>
+
+                <a href="{% url 'coach_profile' coach.user.username %}">View Profile</a>
+            </li>
+        {% endif %}
+    {% empty %}
+        <li>No coaches available.</li>
+    {% endfor %}
+	</ul>
+
+
+{% endblock %}

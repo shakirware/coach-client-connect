@@ -1,0 +1,53 @@
+{% extends 'Users\base_generic.html' %}
+
+{% block content %}
+    <h1>{{ coach_profile.full_name }}'s Coach Profile</h1>
+
+    {% if coach_profile.profile_picture %}
+        <img src="{{ coach_profile.profile_picture.url }}" alt="{{ coach_profile.full_name }}" width="100" height="auto"/>
+    {% else %}
+		<p>No profile picture uploaded.</p>
+	{% endif %}
+
+    <p><strong>Qualifications:</strong> {{ coach_profile.qualifications }}</p>
+    <p><strong>Experience:</strong> {{ coach_profile.experience }}</p>
+    <p><strong>Specializations:</strong> {{ coach_profile.specializations }}</p>
+    <p><strong>Bio:</strong> {{ coach_profile.bio }}</p>
+    <p><strong>Rates:</strong> {{ coach_profile.rates }}</p>
+    <p><strong>Languages:</strong> {{ coach_profile.languages }}</p>
+    <p><strong>Availability:</strong> {{ coach_profile.availability }}</p>
+    <p><strong>Location:</strong> {{ coach_profile.location }}</p>
+
+    {% if coach_profile.awards %}
+        <p><strong>Awards:</strong> {{ coach_profile.awards }}</p>
+    {% endif %}
+
+    <!-- Link to Edit Coach Profile -->
+	{% if user == coach_profile.user %}
+    <a href="{% url 'edit_coach_profile' coach_profile.user.username %}">Edit Profile</a>
+	{% endif %}
+	
+	<!-- Reviews Section -->
+    <h2>Reviews</h2>
+    {% for review in reviews %}
+        <div class="review">
+            <p>Rating: {{ review.rating }}/5</p>
+            <p>{{ review.comment }}</p>
+            <p>Reviewed by: {{ review.author.username }} on {{ review.created_at }}</p>
+        </div>
+    {% empty %}
+        <p>No reviews yet.</p>
+    {% endfor %}
+
+    <!-- Review Form -->
+    {% if user.is_authenticated %}
+        <h3>Write a Review</h3>
+        <form method="post" action="{% url 'add_review' coach_profile.user.username %}">
+            {% csrf_token %}
+            {{ review_form.as_p }}
+            <button type="submit">Submit Review</button>
+        </form>
+    {% else %}
+        <p><a href="{% url 'login' %}">Log in</a> to write a review.</p>
+    {% endif %}
+{% endblock %}

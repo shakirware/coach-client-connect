@@ -1,0 +1,93 @@
+{% extends 'Users\base_generic.html' %}
+
+{% block content %}
+<h2>Dashboard</h2>
+<p>Welcome, {{ user.username }}!</p>
+
+{% if user.is_coach %}
+    <!-- Coach-specific content -->
+    <div class="dashboard-section">
+        <h3>Your Coach Profile</h3>
+        <p><a href="{% url 'coach_profile' username=user.username %}">View/Edit Coach Profile</a></p>
+    </div>
+{% else %}
+    <!-- Client-specific content -->
+    <div class="dashboard-section">
+        <h3>Your Profile</h3>
+        <p><a href="{% url 'profile' username=user.username %}">View/Edit Profile</a></p>
+    </div>
+{% endif %}
+
+<div class="dashboard-section">
+    <h3>Your Conversations</h3>
+    <ul>
+        {% for conversation, last_message in conversations_and_messages %}
+            <li>
+                <a href="{% url 'send_message' conversation_id=conversation.id %}">
+                    Conversation with:
+                    {% for participant in conversation.participants.all %}
+                        {% if participant != user %}
+                            {{ participant.username }}
+                        {% endif %}
+                    {% endfor %}
+                </a>
+                <div id="lastMessage_{{ conversation.id }}">
+                    {% if last_message %}
+                        <p>Last Message: {{ last_message.content }}</p>
+                        <p>Timestamp: {{ last_message.timestamp }}</p>
+                    {% else %}
+                        <p>No messages in this conversation yet.</p>
+                    {% endif %}
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+
+
+
+
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+<script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        // Select all div elements whose id starts with 'lastMessage_'
+        var conversationDivs = document.querySelectorAll('div[id^="lastMessage_"]');
+        var conversationIds = Array.from(conversationDivs).map(function(div) {
+            return div.id.replace('lastMessage_', '');
+        });
+
+        console.log(conversationIds); // Verify the extracted conversation IDs
+
+        // Initialize Pusher
+        var pusher = new Pusher('d0a6be131b51d49dab8c', { cluster: 'eu' });
+
+        // Subscribe to channels and bind events for each conversation
+        conversationIds.forEach(function(conversationId) {
+            var channel = pusher.subscribe('conversation_' + conversationId);
+            channel.bind('new_message', function(data) {
+                var lastMessageDiv = document.getElementById('lastMessage_' + conversationId);
+                if (lastMessageDiv) {
+                    lastMessageDiv.innerHTML = '<p>Last Message: ' + data.message + '</p><p>Timestamp: ' + data.timestamp + '</p>';
+                }
+            });
+        });
+    });
+</script>
+
+
+
+
+
+
+
+
+
+<div class="dashboard-section">
+    <h3>Account Settings</h3>
+    <p><a href="{% url 'password_change' %}">Change Password</a></p>
+    <p><a href="{% url 'delete_account' %}">Delete Account</a></p>
+</div>
+
+<!-- Add more sections as needed for other features like order history, settings, etc. -->
+
+{% endblock %}
